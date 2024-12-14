@@ -104,9 +104,9 @@ def create_station():
         return jsonify({"error": str(e)}), 500
 
 
-@bp.route("/api/get_all_stations", methods=["GET", "OPTIONS"])
+@bp.route("/api/get_paginated_stations", methods=["GET", "OPTIONS"])
 @cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
-def get_all_stations():
+def get_paginated_stations():
     try:
         # Step 1: Get pagination parameters from query string
         page = request.args.get("page", default=1, type=int)
@@ -144,6 +144,31 @@ def get_all_stations():
                     "total": len(
                         total_stations
                     ),  # Use the total count retrieved from the database
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        return jsonify({"error": "An error occurred while retrieving stations."}), 500
+
+
+@bp.route("/api/get_all_stations", methods=["GET", "OPTIONS"])
+@cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
+def get_all_stations():
+    try:
+        success, all_stations = get_document_array(
+            STATIONS_COLLECTION_NAME, STATIONS_DOCUMENT_ID, STATIONS_REFERENCE_NAME
+        )
+
+        if not success:
+            return jsonify({"error": all_stations}), 404
+
+        return (
+            jsonify(
+                {
+                    "stations": all_stations,
+                    # Use the total count retrieved from the database
                 }
             ),
             200,
@@ -191,7 +216,6 @@ def get_station_by_id(station_id):
 
         filtered_station = station[0]
 
-        print("filtered_station", filtered_station)
         if not success:
             return jsonify({"error": filtered_station}), 404
         return jsonify({"station": filtered_station}), 200
@@ -313,10 +337,6 @@ def update_station(station_id):
     try:
         data = request.json
         user_id = get_jwt_identity()
-
-        print("data >>", data)
-        print("station_id >>", station_id)
-        print("user_id >>", user_id)
 
         # First, get the existing station
         success, stations = get_document_array(
