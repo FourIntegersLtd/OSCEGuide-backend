@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "scabuddy"
+version = "0.1.0"
+description = "SCA preparation mock platform"
+authors = ["Four Integers Ltd <hello@fourintegers.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+openai = "^1.57.0"
+instructor = "^1.7.0"
+python-dotenv = "^1.0.1"
+flask = "^3.1.0"
+flask-cors = "^5.0.0"
+jsonify = "^0.5"
+anthropic = "^0.40.0"
+google-cloud-firestore = "^2.19.0"
+pydantic = "^2.10.3"
+flask-bcrypt = "^1.0.1"
+flask-jwt-extended = "^4.7.1"
+flask-mail = "^0.10.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

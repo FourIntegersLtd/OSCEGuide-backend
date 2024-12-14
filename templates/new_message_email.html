@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>New Support Email Notification</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .header h1 {
+        color: #007bff;
+        font-size: 24px;
+      }
+      .content {
+        margin-bottom: 20px;
+      }
+      .content p {
+        margin: 0 0 10px;
+      }
+      .highlight {
+        background-color: #f9f9f9;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+      }
+      .footer {
+        text-align: center;
+        font-size: 0.8em;
+        color: #888;
+        padding-top: 20px;
+        border-top: 1px solid #e1e1e1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>New Support Email Notification</h1>
+      </div>
+      <div class="content">
+        <p>You have a new support email</p>
+        <p><strong>Subject:</strong> {{subject}}</p>
+        <p><strong>Message:</strong></p>
+        <div class="highlight">
+          <p>{{message}}</p>
+        </div>
+        <p><strong>Sender:</strong> {{email}}</p>
+        <p><strong>Received At:</strong> {{received_at}}</p>
+      </div>
+      <div class="email-footer">
+        <p>Best regards,<br />Four Integers Ltd Support Team.</p>
+      </div>
+    </div>
+  </body>
+</html>
