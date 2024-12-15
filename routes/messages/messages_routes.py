@@ -57,7 +57,7 @@ def create_message():
         # New code to send an email after saving the message
         if success:
             msg = Message(
-                "New Message - OSCE Buddy!",
+                "New Message -  Buddy!",
                 sender=GMAIL_DEFAULT_SENDER,
                 recipients=["hello@fourintegers.com"],  # Send to the email provided in the message
             )

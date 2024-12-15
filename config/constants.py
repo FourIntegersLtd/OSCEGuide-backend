@@ -1,5 +1,7 @@
 LOCAL_FRONT_END_URL = "http://localhost:3000"
 
+APP_NAME = "SCA Buddy"
+
 FRONT_END_URLS = [
     LOCAL_FRONT_END_URL,
 ]

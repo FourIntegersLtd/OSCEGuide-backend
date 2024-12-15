@@ -15,6 +15,7 @@ from config.firestore.firestore_config import (
     add_document_array,
     get_document_array,
     update_document_array,
+    get_paginated_users_array,
 )
 from datetime import datetime
 from flask_jwt_extended import (
@@ -29,6 +30,7 @@ from flask import render_template
 from datetime import timedelta
 from itsdangerous import URLSafeTimedSerializer
 from config.helpers import mail
+from config.constants import APP_NAME
 
 
 bcrypt = Bcrypt()
@@ -125,10 +127,8 @@ def register():
 @jwt_required()
 def logout():
     try:
-        # Get current user's ID from JWT token
+        verify_jwt_in_request()
         current_user_id = get_jwt_identity()
-
-        # Fetch the user object to update
         user_result = get_document_array(
             USERS_COLLECTION_NAME,
             USERS_DOCUMENT_ID,
@@ -141,10 +141,7 @@ def logout():
 
         user_object = user_result[1][0]
 
-        # Update is_currently_logged_in status
-        user_object["is_currently_logged_in"] = (
-            False  # Set current login status to False
-        )
+        user_object["is_currently_logged_in"] = False
 
         # Save updated user object back to the database
         update_document_array(
@@ -157,17 +154,26 @@ def logout():
 
         response = make_response(jsonify({"message": "Logout successful"}), 200)
 
-        # Clear access token cookie with matching attributes from login
-        response.set_cookie(
+        cookies_to_clear = [
             "access_token_cookie",
-            value="",
-            httponly=False,
-            secure=False,  # Set to True in production
-            samesite="Lax",
-            path="/",
-            expires=0,
-            domain="localhost",  # Change to None in production
-        )
+            "refresh_token_cookie",
+            "session_id",
+        ]
+
+        for cookie_name in cookies_to_clear:
+            response.set_cookie(
+                cookie_name,
+                value="",
+                httponly=True,
+                secure=True,
+                samesite="Strict",
+                expires=0,
+                path="/",
+            )
+
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
 
         return response
 
@@ -278,6 +284,7 @@ def login():
                         "email": user_object.get("email"),
                         "role": user_object.get("role"),
                         "station_progress": user_object.get("station_progress", []),
+                        "mock_progress": user_object.get("mock_progress", []),
                     },
                 }
             )
@@ -330,6 +337,8 @@ def check_auth():
             "role": user_data.get("role"),
             "is_active": user_data.get("is_active"),
             "has_paid": user_data.get("has_paid"),
+            "mock_progress": user_data.get("mock_progress", []),
+            "station_progress": user_data.get("station_progress", []),
         }
 
         return (
@@ -385,6 +394,7 @@ def forgot_password():
         msg.html = render_template(
             "reset_password_email.html",
             access_token=access_token,
+            app_name=APP_NAME,
         )
 
         try:
@@ -457,3 +467,50 @@ def reset_password():
     )
 
     return jsonify({"message": "Password reset successful"}), 200
+
+
+@bp.route("/api/get_all_users", methods=["GET", "OPTIONS"])
+@cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
+def get_all_users():
+    try:
+        # Step 1: Get pagination parameters from query string
+        page = request.args.get("page", default=1, type=int)
+        limit = request.args.get("limit", default=20, type=int)
+
+        offset = (page - 1) * limit
+
+        # Step 3: Get total count of stations
+        total_success, total_users = get_document_array(
+            USERS_COLLECTION_NAME, USERS_DOCUMENT_ID, USERS_REFERENCE_NAME
+        )
+
+        if not total_success:
+            return jsonify({"error": total_users}), 404
+
+        success, users = get_paginated_users_array(
+            USERS_COLLECTION_NAME,
+            USERS_DOCUMENT_ID,
+            USERS_REFERENCE_NAME,
+            limit=limit,
+            offset=offset,
+        )
+
+        if not success:
+            return jsonify({"error": users}), 404
+
+        return (
+            jsonify(
+                {
+                    "users": users,
+                    "page": page,
+                    "limit": limit,
+                    "total": len(
+                        total_users
+                    ),  
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        return jsonify({"error": "An error occurred while retrieving users."}), 500

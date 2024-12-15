@@ -135,6 +135,60 @@ def get_paginated_stations_array(collection_name, document_id, reference_name, f
         return False, f"Error: {str(error)}"
 
 
+def get_paginated_users_array(collection_name, document_id, reference_name, filters=None, limit=None, offset=0):
+    """
+    Get and filter array items from a Firestore document
+
+    Args:
+        collection_name: Name of the Firestore collection
+        document_id: ID of the document
+        reference_name: Field name containing the array
+        filters: Optional dict of field-value pairs to filter the array (e.g., {'user_id': '123'})
+        limit: Optional integer to limit the number of items returned
+        offset: Optional integer to skip a number of items before starting to return results
+    """
+    try:
+        doc_ref = db.collection(collection_name).document(document_id)
+
+        doc = doc_ref.get()
+        if doc.exists:
+            doc_data = doc.to_dict()
+            if doc_data and reference_name in doc_data:
+                items = doc_data[reference_name]
+
+                # Apply filters if provided
+                if filters:
+                    items = [
+                        item
+                        for item in items
+                        if all(
+                            field in item and item[field] == value
+                            for field, value in filters.items()
+                        )
+                    ]
+
+                # Apply offset and limit for pagination
+                if offset:
+                    items = items[offset:]  # Skip the first 'offset' items
+                if limit is not None:
+                    items = items[:limit]  # Limit the number of items returned
+
+                return True, items
+            else:
+                return False, f"No items found in {reference_name}"
+        else:
+            return False, f"Document {document_id} does not exist in {collection_name}"
+    except Exception as error:
+        return False, f"Error: {str(error)}"
+
+
+
+
+
+
+
+
+
 def update_document_array(
     collection_name, document_id, reference_name, updated_item, unique_fields=None
 ):
