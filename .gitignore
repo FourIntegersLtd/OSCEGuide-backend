@@ -154,7 +154,8 @@ cython_debug/
 
 serviceAccountKey.json
 osceguide.pem
-
+cloudflare_ssl_key.pem
+cloudflaressl.key
 
 
 # PyCharm
