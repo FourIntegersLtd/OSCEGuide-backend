@@ -489,7 +489,7 @@ def reset_password():
 
     return jsonify({"message": "Password reset successful"}), 200
 
-
+@jwt_required()
 @bp.route("/api/get_all_users", methods=["GET", "OPTIONS"])
 @cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
 def get_all_users():
