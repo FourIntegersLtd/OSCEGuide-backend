@@ -13,7 +13,8 @@ from routes.messages.messages_routes import bp as messages_bp
 from config.helpers import mail
 
 LOCAL_FRONT_END_URL = "http://localhost:3000"
-FRONT_END_URLS = [LOCAL_FRONT_END_URL]
+PRODUCTION_FRONT_END_URL = "https://www.osceguide.com"
+FRONT_END_URLS = [LOCAL_FRONT_END_URL, PRODUCTION_FRONT_END_URL]
 
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")
@@ -50,4 +51,4 @@ mail.init_app(app)
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8000, debug=True)
+    app.run(host='0.0.0.0', port=8000, debug=False)
