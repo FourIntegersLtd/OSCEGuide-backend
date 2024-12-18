@@ -11,10 +11,8 @@ from flask_jwt_extended import (
 )
 from routes.messages.messages_routes import bp as messages_bp
 from config.helpers import mail
+from config.constants import FRONT_END_URLS
 
-LOCAL_FRONT_END_URL = "http://localhost:3000"
-PRODUCTION_FRONT_END_URL = "https://www.osceguide.com"
-FRONT_END_URLS = [LOCAL_FRONT_END_URL, PRODUCTION_FRONT_END_URL]
 
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")

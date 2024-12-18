@@ -1,11 +1,13 @@
 LOCAL_FRONT_END_URL = "http://localhost:3000"
-PRODUCTION_FRONT_END_URL = "https://www.osceguide.com"
+PRODUCTION_FRONT_END_URL1 = "https://www.osceguide.com"
+PRODUCTION_FRONT_END_URL2 = "https://osceguide.com"
 
 APP_NAME = "OSCE Guide"
 
 FRONT_END_URLS = [
     LOCAL_FRONT_END_URL,
-    PRODUCTION_FRONT_END_URL,
+    PRODUCTION_FRONT_END_URL1,
+    PRODUCTION_FRONT_END_URL2,
 ]
 
 ADMIN_USER_EMAILS = ["y.hkehinde@yahoo.com", "sheinat03@gmail.com"]
