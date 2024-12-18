@@ -10,6 +10,7 @@ from config.constants import (
     USERS_COLLECTION_NAME,
     USERS_DOCUMENT_ID,
     USERS_REFERENCE_NAME,
+    ADMIN_USER_EMAILS,
 )
 from config.firestore.firestore_config import (
     add_document_array,
@@ -20,7 +21,7 @@ from config.firestore.firestore_config import (
 from models.mocks.MockModel import MockModel
 from config.helpers import get_station_by_id
 from models.users.UserModel import MockProgress
-from flask_jwt_extended import jwt_required, get_jwt_identity, verify_jwt_in_request
+from flask_jwt_extended import jwt_required, get_jwt_identity, verify_jwt_in_request, get_jwt
 
 bp = Blueprint("mocks", __name__)  #
 
@@ -32,6 +33,11 @@ def create_mock():
     try:
         verify_jwt_in_request()
         user_id = get_jwt_identity()
+        claims = get_jwt()
+        current_user_email = claims.get("email")
+
+        if current_user_email not in ADMIN_USER_EMAILS:
+            return jsonify({"message": "You are not authorized to create mocks"}), 403
 
         data = request.json
 
@@ -96,8 +102,13 @@ def get_mocks():
 def update_mock(mock_id):
     try:
         data = request.json
-
         verify_jwt_in_request()
+        claims = get_jwt()
+        current_user_email = claims.get("email")
+
+        if current_user_email not in ADMIN_USER_EMAILS:
+            return jsonify({"message": "You are not authorized to update mocks"}), 403
+
         user_id = get_jwt_identity()
 
         # Validate input data
@@ -140,10 +151,18 @@ def update_mock(mock_id):
         return jsonify({"error": str(e)}), 500
 
 
+@jwt_required()
 @bp.route("/api/delete_mock/<mock_id>", methods=["DELETE", "OPTIONS"])
 @cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
 def delete_mock(mock_id):
     try:
+        verify_jwt_in_request()
+        claims = get_jwt()
+        current_user_email = claims.get("email")
+
+        if current_user_email not in ADMIN_USER_EMAILS:
+            return jsonify({"message": "You are not authorized to delete mocks"}), 403
+
         # Validate mock_id
         if not mock_id:
             return jsonify({"error": "Mock ID is required"}), 400

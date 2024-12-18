@@ -3,7 +3,12 @@ from datetime import datetime
 from flask_cors import cross_origin
 from models.users.UserModel import StationProgress
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import (
+    jwt_required,
+    get_jwt_identity,
+    verify_jwt_in_request,
+    get_jwt,
+)
 from config.constants import (
     FRONT_END_URLS,
     STATIONS_COLLECTION_NAME,
@@ -12,15 +17,17 @@ from config.constants import (
     USERS_COLLECTION_NAME,
     USERS_DOCUMENT_ID,
     USERS_REFERENCE_NAME,
+    ADMIN_USER_EMAILS,
 )
 from config.firestore.firestore_config import (
     add_document_array,
     get_document_array,
     update_document_array,
     get_paginated_stations_array,
+    delete_document_array_item,
 )
 
-bp = Blueprint("stations", __name__)  #
+bp = Blueprint("stations", __name__)
 
 
 @jwt_required()
@@ -28,8 +35,14 @@ bp = Blueprint("stations", __name__)  #
 @cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
 def create_station():
     try:
+        verify_jwt_in_request()
+        print("[DEBUG] Starting create_station endpoint")
         data = request.json
+        print(f"[DEBUG] Received data: {data}")
+
         user_id = get_jwt_identity()
+        print(f"[DEBUG] User ID from JWT: {user_id}")
+
         station_data = {
             "station_id": str(uuid.uuid4()),
             "station_name": data.get("station_name"),
@@ -84,14 +97,17 @@ def create_station():
             },
             "tags": data.get("tags", []),
         }
+        print(f"[DEBUG] Constructed station_data: {station_data}")
 
         # Add document to Firestore
+        print("[DEBUG] Attempting to add document to Firestore")
         add_document_array(
             STATIONS_COLLECTION_NAME,
             STATIONS_DOCUMENT_ID,
             STATIONS_REFERENCE_NAME,
             station_data,
         )
+        print("[DEBUG] Successfully added document to Firestore")
 
         return (
             jsonify(
@@ -101,6 +117,7 @@ def create_station():
         )
 
     except Exception as e:
+        print(f"[DEBUG] Error in create_station: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -330,13 +347,21 @@ def flag_station():
         return jsonify({"error": "An error occurred while flagging the station."}), 500
 
 
+@jwt_required()
 @bp.route("/api/update_station/<station_id>", methods=["PUT", "OPTIONS"])
 @cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
-@jwt_required()
 def update_station(station_id):
     try:
         data = request.json
-        user_id = get_jwt_identity()
+        verify_jwt_in_request()
+        claims = get_jwt()
+        current_user_email = claims.get("email")
+
+        if current_user_email not in ADMIN_USER_EMAILS:
+            return (
+                jsonify({"message": "You are not authorized to update stations"}),
+                403,
+            )
 
         # First, get the existing station
         success, stations = get_document_array(
@@ -350,10 +375,6 @@ def update_station(station_id):
             return jsonify({"error": "Station not found"}), 404
 
         existing_station = stations[0]
-
-        # # Check if the user is the creator of the station
-        # if existing_station.get("created_by") != user_id:
-        #     return jsonify({"error": "Unauthorized to update this station"}), 403
 
         # Initialize the update dictionary with only changed fields
         updated_fields = {}
@@ -446,3 +467,34 @@ def update_station(station_id):
             ),
             500,
         )
+
+
+@jwt_required()
+@bp.route("/api/delete_station/<station_id>", methods=["DELETE", "OPTIONS"])
+@cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
+def delete_station(station_id):
+    try:
+        verify_jwt_in_request()
+        # Get the claims from the JWT token which includes the email
+        claims = get_jwt()
+        current_user_email = claims.get("email")
+
+        if current_user_email not in ADMIN_USER_EMAILS:
+            return jsonify({"message": "Unauthorized to delete stations"}), 403
+
+        # Use delete_document_array to remove the station
+        success, message = delete_document_array_item(
+            collection_name=STATIONS_COLLECTION_NAME,
+            document_id=STATIONS_DOCUMENT_ID,
+            reference_name=STATIONS_REFERENCE_NAME,
+            unique_fields=["station_id"],  # Field to identify the station
+            unique_values=[station_id],  # Value to match
+        )
+
+        if not success:
+            return jsonify({"error": message}), 500
+
+        return jsonify({"message": "Station deleted successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"error": "An error occurred while deleting the station."}), 500

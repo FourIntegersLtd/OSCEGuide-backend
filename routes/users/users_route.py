@@ -9,6 +9,7 @@ from config.constants import (
     USERS_COLLECTION_NAME,
     USERS_DOCUMENT_ID,
     USERS_REFERENCE_NAME,
+    ADMIN_USER_EMAILS,
 )
 from flask import Blueprint, request, jsonify
 from config.firestore.firestore_config import (
@@ -16,6 +17,7 @@ from config.firestore.firestore_config import (
     get_document_array,
     update_document_array,
     get_paginated_users_array,
+    delete_document_array_item,
 )
 from datetime import datetime
 from flask_jwt_extended import (
@@ -23,6 +25,7 @@ from flask_jwt_extended import (
     jwt_required,
     get_jwt_identity,
     verify_jwt_in_request,
+    get_jwt,
 )
 from flask import jsonify, request, make_response
 from flask_mail import Message
@@ -122,7 +125,7 @@ def register():
         return jsonify({"message": "Error during registration!", "error": str(e)}), 500
 
 
-@bp.route("/api/logout", methods=["GET", "OPTIONS"])
+@bp.route("/api/logout", methods=["POST", "OPTIONS"])
 @cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
 @jwt_required()
 def logout():
@@ -165,10 +168,10 @@ def logout():
                 cookie_name,
                 value="",
                 httponly=True,
-                secure=True,
-                samesite="Strict",
+                secure=True,  # TODO: Change to True
+                samesite="None",
                 expires=0,
-                path="/",
+               
             )
 
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
@@ -200,6 +203,8 @@ def get_user_by_id(user_id: str):
 
         user_data = user_result[1][0]
 
+        print("user_data", user_data)
+
         # Sanitize user data - only return necessary fields
         sanitized_user_data = {
             "user_id": user_data.get("user_id"),
@@ -226,6 +231,8 @@ def login():
         email = data.get("email")
         password = data.get("password")
 
+       
+
         if not email or not password:
             return jsonify({"message": "Email and password are required"}), 400
 
@@ -241,6 +248,18 @@ def login():
 
         user_data = user[1]
         user_object = user_data[0]
+
+        # print("user_object", user_object)
+
+        # if user_object.get("has_paid") == False:
+        #     return (
+        #         jsonify(
+        #             {
+        #                 "message": "Your payment details are still being processed, please contact support if you have paid."
+        #             }
+        #         ),
+        #         401,
+        #     )
 
         peppered_password = PASSWORD_PEPPER + password
         if not bcrypt.check_password_hash(
@@ -296,6 +315,7 @@ def login():
             secure=True,
             httponly=True,
             samesite="None",
+         
         )
 
         return response
@@ -339,6 +359,7 @@ def check_auth():
             "has_paid": user_data.get("has_paid"),
             "mock_progress": user_data.get("mock_progress", []),
             "station_progress": user_data.get("station_progress", []),
+            "flagged_stations": user_data.get("flagged_stations", []),
         }
 
         return (
@@ -504,9 +525,7 @@ def get_all_users():
                     "users": users,
                     "page": page,
                     "limit": limit,
-                    "total": len(
-                        total_users
-                    ),  
+                    "total": len(total_users),
                 }
             ),
             200,
@@ -514,3 +533,89 @@ def get_all_users():
 
     except Exception as e:
         return jsonify({"error": "An error occurred while retrieving users."}), 500
+
+
+@jwt_required()
+@bp.route("/api/update_user/<user_id>", methods=["PUT", "OPTIONS"])
+@cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
+def update_user(user_id: str):
+    try:
+
+        verify_jwt_in_request()
+        claims = get_jwt()
+        current_user_email = claims.get("email")
+
+        if current_user_email not in ADMIN_USER_EMAILS:
+            return (
+                jsonify({"message": "You are not authorized to update this user"}),
+                403,
+            )
+
+        data = request.json
+
+        # First, get the existing user data
+        user_result = get_document_array(
+            USERS_COLLECTION_NAME,
+            USERS_DOCUMENT_ID,
+            USERS_REFERENCE_NAME,
+            filters={"user_id": user_id},
+        )
+
+        if not user_result[0] or not user_result[1]:
+            return jsonify({"message": "User not found"}), 404
+
+        user_data = user_result[1][0]
+
+        # Update only the fields that were sent in the request
+        if "mock_progress" in data:
+            user_data["mock_progress"] = data["mock_progress"]
+
+        if "station_progress" in data:
+            user_data["station_progress"] = data["station_progress"]
+
+        if "has_paid" in data:
+            user_data["has_paid"] = data["has_paid"]
+
+        # Update the document in Firestore
+        update_document_array(
+            USERS_COLLECTION_NAME,
+            USERS_DOCUMENT_ID,
+            USERS_REFERENCE_NAME,
+            user_data,
+            unique_fields=["user_id"],
+        )
+
+        return jsonify({"message": "User updated successfully", "user": user_data}), 200
+
+    except Exception as e:
+        return jsonify({"message": "Error updating user", "error": str(e)}), 500
+
+
+@bp.route("/api/delete_user/<user_id>", methods=["DELETE", "OPTIONS"])
+@cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
+@jwt_required()
+def delete_user(user_id):
+    try:
+        # Get the claims from the JWT token which includes the email
+        claims = get_jwt()
+        current_user_email = claims.get('email')  # Get email from token claims
+
+        if current_user_email not in ADMIN_USER_EMAILS:
+            return jsonify({"message": "Unauthorized to delete users"}), 403
+
+        # Use delete_document_array to remove the user
+        success, message = delete_document_array_item(
+            collection_name=USERS_COLLECTION_NAME,
+            document_id=USERS_DOCUMENT_ID,
+            reference_name=USERS_REFERENCE_NAME,
+            unique_fields=["user_id"],
+            unique_values=[user_id]
+        )
+
+        if not success:
+            return jsonify({"error": message}), 500
+
+        return jsonify({"message": "User deleted successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"error": "An error occurred while deleting the user."}), 500    

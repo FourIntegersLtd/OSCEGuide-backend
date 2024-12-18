@@ -87,8 +87,9 @@ def get_document_array(collection_name, document_id, reference_name, filters=Non
         return False, f"Error: {str(error)}"
 
 
-
-def get_paginated_stations_array(collection_name, document_id, reference_name, filters=None, limit=None, offset=0):
+def get_paginated_stations_array(
+    collection_name, document_id, reference_name, filters=None, limit=None, offset=0
+):
     """
     Get and filter array items from a Firestore document
 
@@ -135,7 +136,9 @@ def get_paginated_stations_array(collection_name, document_id, reference_name, f
         return False, f"Error: {str(error)}"
 
 
-def get_paginated_users_array(collection_name, document_id, reference_name, filters=None, limit=None, offset=0):
+def get_paginated_users_array(
+    collection_name, document_id, reference_name, filters=None, limit=None, offset=0
+):
     """
     Get and filter array items from a Firestore document
 
@@ -180,13 +183,6 @@ def get_paginated_users_array(collection_name, document_id, reference_name, filt
             return False, f"Document {document_id} does not exist in {collection_name}"
     except Exception as error:
         return False, f"Error: {str(error)}"
-
-
-
-
-
-
-
 
 
 def update_document_array(

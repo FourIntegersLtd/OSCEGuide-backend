@@ -1,10 +1,12 @@
 LOCAL_FRONT_END_URL = "http://localhost:3000"
 
-APP_NAME = "SCA Buddy"
+APP_NAME = "OSCE Guide"
 
 FRONT_END_URLS = [
     LOCAL_FRONT_END_URL,
 ]
+
+ADMIN_USER_EMAILS = ["y.hkehinde@yahoo.com", "sheinat03@gmail.com"]
 
 FEEDBACKS_COLLECTION_NAME = "feedbacks_collection"
 FEEDBACKS_REFERENCE_NAME = "feedbacks"
