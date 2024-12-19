@@ -58,6 +58,7 @@ def generate_token(email: str) -> str:
     return serializer.dumps(email, salt="password-reset-salt")
 
 
+@jwt_required()
 @bp.route("/api/register", methods=["POST", "OPTIONS"])
 @cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
 def register():
@@ -125,9 +126,9 @@ def register():
         return jsonify({"message": "Error during registration!", "error": str(e)}), 500
 
 
+@jwt_required()
 @bp.route("/api/logout", methods=["POST", "OPTIONS"])
 @cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
-@jwt_required()
 def logout():
     try:
         verify_jwt_in_request()
@@ -184,9 +185,9 @@ def logout():
         return jsonify({"message": "Error during logout!", "error": str(e)}), 500
 
 
+@jwt_required()
 @bp.route("/api/get_user_by_id/<user_id>", methods=["GET", "OPTIONS"])
 @cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
-@jwt_required()
 def get_user_by_id(user_id: str):
     try:
 
@@ -222,7 +223,7 @@ def get_user_by_id(user_id: str):
     except Exception as e:
         return jsonify({"status": "error", "message": "Error fetching user data"}), 500
 
-
+@jwt_required()
 @bp.route("/api/login", methods=["POST", "OPTIONS"])
 @cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
 def login():
@@ -299,7 +300,7 @@ def login():
                     "status": "success",
                     "message": "Login successful",
                     "user": {
-                        "userId": user_object.get("user_id"),
+                        "user_id": user_object.get("user_id"),
                         "email": user_object.get("email"),
                         "role": user_object.get("role"),
                         "station_progress": user_object.get("station_progress", []),
@@ -377,6 +378,7 @@ def check_auth():
         return jsonify({"status": "error", "message": str(e)}), 400
 
 
+@jwt_required()
 @bp.route("/api/forgot_password", methods=["POST", "OPTIONS"])
 @cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
 def forgot_password():
@@ -440,7 +442,7 @@ def forgot_password():
     except Exception as e:
         return jsonify({"message": "Error processing request"}), 500
 
-
+@jwt_required()
 @bp.route("/api/reset_password", methods=["POST", "OPTIONS"])
 @cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
 def reset_password():
@@ -488,6 +490,7 @@ def reset_password():
     )
 
     return jsonify({"message": "Password reset successful"}), 200
+
 
 @jwt_required()
 @bp.route("/api/get_all_users", methods=["GET", "OPTIONS"])
@@ -591,9 +594,9 @@ def update_user(user_id: str):
         return jsonify({"message": "Error updating user", "error": str(e)}), 500
 
 
+@jwt_required()
 @bp.route("/api/delete_user/<user_id>", methods=["DELETE", "OPTIONS"])
 @cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
-@jwt_required()
 def delete_user(user_id):
     try:
         # Get the claims from the JWT token which includes the email

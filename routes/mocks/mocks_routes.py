@@ -68,6 +68,7 @@ def create_mock():
         return jsonify({"error": str(e)}), 500
 
 
+@jwt_required()
 @bp.route("/api/get_mocks", methods=["GET", "OPTIONS"])
 @cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
 def get_mocks():
@@ -201,6 +202,7 @@ def delete_mock(mock_id):
         return jsonify({"error": str(e)}), 500
 
 
+@jwt_required()
 @bp.route("/api/complete_mock", methods=["POST", "OPTIONS"])
 @cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
 def complete_mock():

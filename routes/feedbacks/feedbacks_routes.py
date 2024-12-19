@@ -20,11 +20,11 @@ from config.ai_clients.aiclients_config import (
     instructor_open_ai_client,
 )
 from config.firestore.firestore_config import add_document_array, get_document_array, update_document_array
-
+from flask_jwt_extended import jwt_required
 
 bp = Blueprint("feedbacks", __name__)
 
-
+@jwt_required()
 @bp.route("/api/generate_feedback", methods=["POST", "OPTIONS"])
 @cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
 def feedback_api():
@@ -59,7 +59,10 @@ def feedback_api():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+  # This ensures only authenticated users can access this endpoint
 
+
+@jwt_required()
 @bp.route("/api/add_feedback_to_db", methods=["POST", "OPTIONS"])
 @cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
 def add_feedback():
@@ -158,6 +161,7 @@ def add_feedback():
             "details": str(e)
         }), 500
 
+@jwt_required()
 @bp.route(
     "/api/get_feedbacks/<mock_id>/<station_id>/<user_id>", methods=["GET", "OPTIONS"]
 )

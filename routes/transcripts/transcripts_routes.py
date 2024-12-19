@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 from flask_cors import cross_origin
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required
 from config.constants import (
     FRONT_END_URLS,
     TRANSCRIPT_COLLECTION_NAME,
@@ -14,7 +15,7 @@ from models.transcripts.TranscriptModel import Transcript
 
 bp = Blueprint("transcripts", __name__)  #
 
-
+@jwt_required()     
 @bp.route("/api/add_transcript_to_db", methods=["POST", "OPTIONS"])
 @cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
 def add_transcript():
@@ -64,9 +65,8 @@ def add_transcript():
         return jsonify({"error": str(e)}), 500
 
 
-@bp.route(
-    "/api/get_transcripts/<mock_id>/<station_id>/<user_id>", methods=["GET", "OPTIONS"]
-)
+@jwt_required()
+@bp.route("/api/get_transcripts/<mock_id>/<station_id>/<user_id>", methods=["GET", "OPTIONS"])
 @cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
 def get_transcripts(mock_id, station_id, user_id):
     try:

@@ -15,23 +15,30 @@ class EvaluationScore(BaseModel):
         pattern="^[RAG]$",
     )
     supporting_phrase: Optional[str] = Field(
-        description="Direct quote supporting the score BASED ONLY ON THE DOCTOR'S COMMUNICATION AND BEHAVIOR, CRITICAL EVALUATION GUIDELINES:\n\n"
+        description="Direct quote supporting the score with additional cultural/linguistic considerations:\n\n"
+        "🔍 STRICT QUOTE UNIQUENESS REQUIREMENTS:\n"
+        "1. Each quote MUST BE COMPLETELY UNIQUE across ALL domains and categories\n"
+        "2. Even partial overlaps or similar phrases are NOT permitted\n"
+        "3. System should reject any duplicate or similar quotes\n\n"
         "🔍 SUPPORTING PHRASE RULES:\n"
-        "- ONLY use quotes from the DOCTOR'S dialogue\n"
-        "- The supporting phrase must directly demonstrate the skill being evaluated\n\n"
-        "- If NO suitable doctor quote exists for a skill, mark the score but leave supporting_phrase as NULL\n"
-        "- DO NOT use patient dialogue under ANY circumstances\n\n"
-        "❌ INCORRECT Example:\n"
-        'Patient says: "I\'m worried about my heart"\n'
-        'Supporting Phrase: "I\'m worried about my heart" ❌ WRONG\n\n'
+        "1. ONLY use quotes from the DOCTOR'S dialogue\n"
+        "2. Maximum length: 2-3 sentences to ensure distinctiveness\n"
+        "3. AUTOMATIC RED SCORE TRIGGERS:\n"
+        "   - Use of informal phrases (e.g., 'yeah', 'okay', 'alright then')\n"
+        "   - Use of idioms or colloquialisms\n"
+        "   - Unexplained complex medical terminology\n"
+        "   - Rushed or unclear pronunciation\n"
+        "   - Culture-specific references\n\n"
         "✅ CORRECT Example:\n"
-        'Doctor says: "I understand your concerns about heart health. Let\'s discuss this together."\n'
-        'Supporting Phrase: "I understand your concerns about heart health. Let\'s discuss this together." ✅ CORRECT\n\n'
-        "Evaluation Steps:\n"
-        "1. Read entire consultation transcript\n"
-        "2. Assess ONLY the doctor's communication\n"
-        "3. Select supporting phrases STRICTLY from doctor's dialogue\n"
-        "4. Ensure phrases match the specific skill being evaluated"
+        'Instead of: "Yeah, that sounds about right" (RED SCORE)\n'
+        'Better: "I understand your concerns and would like to explain further"\n\n'
+        "❌ STRICTLY PROHIBITED (ALL RESULT IN RED SCORE):\n"
+        "- ANY repeated quotes across ALL domains\n"
+        "- Similar phrases with minor variations\n"
+        "- Informal/casual language\n"
+        "- Culture-specific references\n"
+        "- Unexplained medical terms\n"
+        "- Quotes longer than 3 sentences"
     )
 
 
@@ -44,97 +51,162 @@ class GlobalSkills(BaseModel):
     """
 
     structures_consultation: EvaluationScore = Field(
-        description=" Assesses the doctor's ability to organize the consultation systematically. G: Clear logical flow, smooth transitions between stages. A: Some structure but occasional digressions. R: Disorganized, no clear consultation framework."
+        description="G: Must do ALL: clear opening/introduction, systematic history, focused examination, structured closing, "
+        "explicit signposting between ALL stages, completes within appropriate timeframes.\n"
+        "A: Misses ONE element but maintains overall structure.\n"
+        "R: Misses multiple elements OR unclear framework OR poor time management."
     )
+    
     avoids_repetition: EvaluationScore = Field(
-        description="Evaluates the doctor's communication efficiency and avoiding redundant questions. G: Asks each question purposefully, no unnecessary repetition. A: Some repeated or slightly overlapping inquiries. R: Frequently asks the same questions, shows poor information synthesis."
+        description="G: Zero repetition of questions/statements AND demonstrates perfect information retention.\n"
+        "A: ONE justified clarification with clear purpose.\n"
+        "R: ≥2 repeated questions OR asks for previously provided information."
     )
+
     progresses_through_tasks: EvaluationScore = Field(
-        description=" Measures the doctor's ability to move purposefully through consultation stages. G: Smooth, efficient progression, covers all necessary ground. A: Some hesitation or minor delays in task progression. R: Struggles to move forward, gets stuck or loses consultation direction."
+        description="G: Completes ALL consultation stages in sequence WITH clear transitions AND within 10 minutes.\n"
+        "A: Completes most stages with ≤2 minor delays OR slight time overrun.\n"
+        "R: >2 delays OR significant time overrun OR incomplete stages."
     )
+
     recognises_ethical_implications: EvaluationScore = Field(
-        description="Assesses the doctor's   awareness and consideration of ethical aspects. G: Proactively addresses potential ethical concerns, shows sensitivity. A: Partially acknowledges ethical dimensions. R: Fails to recognize or consider important ethical implications."
+        description="G: Identifies ALL ethical issues AND addresses confidentiality, consent, AND autonomy explicitly.\n"
+        "A: Addresses 2 of 3: confidentiality, consent, autonomy.\n"
+        "R: Addresses ≤1 ethical element OR misses major ethical concerns."
     )
+
     finishes_data_gathering: EvaluationScore = Field(
-        description="Evaluates the doctor's time management in information collection. G: Completes comprehensive data gathering within 6-7 minutes efficiently. A: Slightly rushed or extended data gathering. R: Significantly over or under time, incomplete information collection."
+        description="G: Completes comprehensive history AND examination within 6-7 minutes.\n"
+        "A: Complete data gathering in 5-6 OR 7-8 minutes.\n"
+        "R: <5 or >8 minutes OR incomplete essential information."
     )
+
     uses_clear_language: EvaluationScore = Field(
-        description="Measures the doctor's communication clarity and accessibility. G: Uses precise, understandable medical terminology, adapts language to patient's comprehension. A: Generally clear but occasional complex medical jargon. R: Consistently uses incomprehensible or overly technical language."
+        description="G: Uses layperson terms throughout AND checks understanding ≥3 times.\n"
+        "A: ≤2 instances of medical jargon with explanation.\n"
+        "R: >2 instances of unexplained jargon OR no understanding checks."
     )
+
     remains_responsive_to_patient: EvaluationScore = Field(
-        description="Assesses the doctor's patient-centered communication and active listening. G: Consistently attentive, responds empathetically to patient's verbal and non-verbal cues. A: Partially responsive, some missed patient signals. R: Appears disengaged, minimal patient acknowledgment."
+        description="G: Acknowledges ALL verbal/non-verbal cues AND provides ≥3 empathetic responses.\n"
+        "A: Acknowledges ≥70% of cues with 1-2 empathetic responses.\n"
+        "R: Misses >30% of cues OR no empathetic responses."
     )
 
 
 class Tasks(BaseModel):
     opens_consultation: EvaluationScore = Field(
-        description="Evaluates the doctor's initial consultation approach. G: Warmly welcomes patient, clearly invites narrative, sets positive consultation tone. A: Standard opening, minimal personalization. R: Abrupt or impersonal start, fails to create comfortable environment."
+        description="G: Must do ALL: introduces self, confirms patient identity, obtains consent, establishes agenda. "
+        "A: Misses one element but maintains professionalism. "
+        "R: Misses multiple elements or appears unprofessional."
     )
     discovers_psychosocial_context: EvaluationScore = Field(
-        description="Measures the doctor's holistic understanding beyond medical symptoms. G: Comprehensively explores patient's life context, social determinants of health. A: Partial exploration of psychosocial factors. R: Focuses exclusively on medical symptoms, ignores broader context."
+        description="G: Explores occupation, living situation, support systems, and impact on daily life. "
+        "A: Explores 2-3 psychosocial elements. "
+        "R: Fails to explore any psychosocial context."
     )
     identifies_cues: EvaluationScore = Field(
-        description="Assesses the doctor's ability to detect subtle patient communication signals. G: Expertly recognizes and follows up on explicit and implicit patient cues. A: Catches some, misses some important cues. R: Consistently misses or ignores patient's verbal and non-verbal signals."
+        description="G: Spots and explores >3 verbal/non-verbal cues with appropriate follow-up. "
+        "A: Identifies 1-2 cues with some follow-up. "
+        "R: Misses obvious cues or inappropriate response."
     )
     discovers_ice: EvaluationScore = Field(
-        description="Evaluates the doctor's exploration of patient's Ideas, Concerns, and Expectations. G: Thoroughly and sensitively explores patient's perspective on illness. A: Partially investigates ICE. R: Fails to explore patient's illness perception."
+        description="G: Explicitly explores all three: ideas, concerns, AND expectations. "
+        "A: Explores two ICE elements. "
+        "R: Explores one or no ICE elements."
     )
     interprets_tests: EvaluationScore = Field(
-        description="Measures the doctor's diagnostic reasoning and test interpretation. G: Precise, evidence-based interpretation, explains rationale clearly. A: Generally accurate interpretation with some uncertainty. R: Incorrect or unclear test interpretation."
+        description="G: Explains results, significance, and implications with complete accuracy. "
+        "A: Minor inaccuracies in explanation but core message correct. "
+        "R: Major inaccuracies or unclear explanation."
     )
     generates_hypotheses: EvaluationScore = Field(
-        description="Assesses the doctor's diagnostic reasoning complexity. G: Generates multiple nuanced diagnostic hypotheses, systematically evaluates. A: Develops basic hypotheses with some depth. R: Limited or overly simplistic diagnostic reasoning."
+        description="G: Generates ≥3 relevant differential diagnoses with clear reasoning. "
+        "A: 2 reasonable differentials considered. "
+        "R: Single or incorrect differential."
     )
     rules_in_out_disease: EvaluationScore = Field(
-        description="Evaluates the doctor's systematic approach to differential diagnosis. G: Methodically and comprehensively rules in/out potential serious conditions. A: Partially considers differential diagnosis. R: Incomplete or superficial disease elimination process."
+        description="G: Systematically excludes red flags and serious conditions with specific questions. "
+        "A: Partial assessment of serious conditions. "
+        "R: Fails to consider serious diagnoses."
     )
     reaches_diagnosis: EvaluationScore = Field(
-        description="Measures the doctor's diagnostic conclusion quality. G: Reaches well-reasoned, evidence-supported working diagnosis. A: Tentative or partially supported diagnosis. R: Premature or unsupported diagnostic conclusion."
+        description="G: Evidence-based diagnosis with clear explanation of reasoning. "
+        "A: Reasonable diagnosis but incomplete reasoning. "
+        "R: Incorrect or unsupported diagnosis."
     )
     offers_management_plan: EvaluationScore = Field(
-        description="Assesses the doctor's patient-centered treatment strategy. G: Develops comprehensive, personalized management plan considering patient preferences. A: Standard management approach with minimal personalization. R: Generic or inappropriate management strategy."
+        description="G: Specific plan with medication details, lifestyle changes, AND follow-up timing. "
+        "A: Basic plan missing one key element. "
+        "R: Vague or inappropriate plan."
     )
     manages_comorbidity: EvaluationScore = Field(
-        description="Evaluates the doctor's ability to manage complex health conditions. G: Expertly navigates multiple health conditions, considers interactions. A: Partially addresses comorbidities. R: Fails to acknowledge or manage related health conditions."
+        description="G: Addresses all comorbidities with specific medication/interaction considerations. "
+        "A: Acknowledges comorbidities with partial management. "
+        "R: Ignores relevant comorbidities."
     )
     provides_safety_net: EvaluationScore = Field(
-        description="Measures the doctor's follow-up and contingency planning. G: Clear, comprehensive follow-up plan, explicit safety instructions. A: Basic follow-up guidance. R: Inadequate or absent follow-up and safety planning."
+        description="G: Specific red flags, timeframes, AND action plan for deterioration. "
+        "A: General safety advice without specifics. "
+        "R: No safety-netting or inappropriate advice."
     )
 
 
 class RelatingToOthers(BaseModel):
     generates_rapport: EvaluationScore = Field(
-        description="Assesses the doctor's interpersonal connection quality. G: Builds strong, immediate empathetic connection. A: Polite but somewhat distant interaction. R: Fails to establish any meaningful patient rapport."
+        description="G: Must do ALL: maintains eye contact, uses patient's name, acknowledges emotions, demonstrates empathy ≥3 times.\n"
+        "A: Achieves 2-3 elements but misses some opportunities.\n"
+        "R: Achieves ≤1 element OR appears disinterested/dismissive."
     )
     uses_open_questions: EvaluationScore = Field(
-        description="Evaluates the doctor's questioning technique breadth. G: Masterfully uses open questions to encourage comprehensive patient narrative. A: Some effective open questioning. R: Predominantly closed or leading questions."
+        description="G: Uses ≥3 effective open questions AND allows complete responses without interruption.\n"
+        "A: Uses 1-2 open questions with adequate follow-up.\n"
+        "R: No open questions OR consistently interrupts responses."
     )
     clarifies_cues: EvaluationScore = Field(
-        description="Measures the doctor's depth of patient cue exploration. G: Systematically and sensitively explores and clarifies patient cues. A: Partially investigates patient signals. R: Consistently overlooks or dismisses patient cues."
+        description="G: Identifies AND explores ≥3 verbal/non-verbal cues with specific follow-up questions.\n"
+        "A: Explores 1-2 cues with some follow-up.\n"
+        "R: Misses obvious cues OR inappropriate/no follow-up."
     )
     listens_curiosity: EvaluationScore = Field(
-        description="Assesses the doctor's active and engaged listening. G: Demonstrates genuine curiosity, active listening, meaningful follow-ups. A: Intermittent attentiveness. R: Appears disinterested, minimal genuine listening."
+        description="G: Demonstrates ALL: active listening, appropriate silences, meaningful follow-ups, summarizes ≥2 times.\n"
+        "A: Demonstrates 2-3 elements but inconsistent.\n"
+        "R: ≤1 element OR appears disinterested."
     )
     uses_closed_questions: EvaluationScore = Field(
-        description="Evaluates the doctor's targeted information gathering. G: Precisely uses closed questions to gather specific, necessary information. A: Some effective closed questioning. R: Overuses closed questions, restricts patient narrative."
+        description="G: Uses closed questions ONLY for specific clarification AND limits to ≤3 consecutive.\n"
+        "A: Occasional overuse but maintains narrative flow.\n"
+        "R: Dominates with closed questions OR creates interrogative atmosphere."
     )
     explains_rationale: EvaluationScore = Field(
-        description="Measures the doctor's transparency in clinical reasoning. G: Clearly explains reasoning behind questions and actions. A: Partial explanation of clinical approach. R: Provides no context or rationale for clinical actions."
+        description="G: Explains reasoning for ALL: questions, examinations, AND investigations clearly.\n"
+        "A: Explains reasoning for 2 of 3 elements.\n"
+        "R: Minimal/no explanation of clinical reasoning."
     )
     verbalises_diagnosis: EvaluationScore = Field(
-        description="Assesses the doctor's ability to communicate diagnosis clearly, compassionately, and comprehensibly in a patient-friendly manner. G: Articulates diagnosis clearly, compassionately, and comprehensibly. A: Basic diagnostic explanation. R: Unclear or insensitive diagnostic communication."
+        description="G: Explains diagnosis with ALL: clear language, specific evidence, patient understanding check.\n"
+        "A: Includes 2 elements but lacks completeness.\n"
+        "R: Unclear explanation OR no understanding check."
     )
     shares_ice_plan: EvaluationScore = Field(
-        description="Evaluates the doctor's ability to integrate patient's Ideas, Concerns, and Expectations into management plan. G: Explicitly incorporates patient's perspective into management plan. A: Partial integration of patient perspective. R: Ignores patient's perspective in planning."
+        description="G: Explicitly addresses ALL: ideas, concerns, AND expectations in management plan.\n"
+        "A: Addresses 2 ICE elements in plan.\n"
+        "R: Addresses ≤1 ICE element OR ignores patient perspective."
     )
     negotiates_psychosocial_plan: EvaluationScore = Field(
-        description="Measures the doctor's holistic care approach. G: Comprehensively negotiates plan considering broader life context. A: Partially considers psychosocial factors. R: Exclusively biomedical approach, ignores social context."
+        description="G: Addresses ALL: work impact, social support, lifestyle changes, AND practical constraints.\n"
+        "A: Addresses 2-3 psychosocial elements.\n"
+        "R: Addresses ≤1 element OR purely medical focus."
     )
     shares_risks: EvaluationScore = Field(
-        description="Assesses the doctor's ability to inform consent process. G: Transparently and compassionately discusses all potential risks and options. A: Provides basic risk information. R: Inadequate or unclear risk communication."
+        description="G: Discusses ALL: benefits, risks, alternatives, AND obtains informed consent.\n"
+        "A: Covers 2-3 elements but lacks detail.\n"
+        "R: Inadequate risk discussion OR no clear consent."
     )
     supports_decision_making: EvaluationScore = Field(
-        description="Evaluates how the doctor supports patient's empowerment in healthcare decisions. G: Fully supports patient's autonomous decision-making process. A: Provides some decision support. R: Paternalistic or dismissive approach to patient choices."
+        description="G: Offers ALL: clear options, balanced information, time to decide, AND respects choice.\n"
+        "A: Provides 2-3 elements of decision support.\n"
+        "R: Directive approach OR inadequate support."
     )
 
 
@@ -185,6 +257,14 @@ class ActionableFeedback(BaseModel):
         description="2-3 highest priority areas across all domains with detailed improvement plans",
         min_items=3,
         max_items=6
+    )
+    cultural_linguistic_considerations: list[str] = Field(
+        description="Specific feedback on cultural and linguistic appropriateness",
+        default_factory=list
+    )
+    language_adaptations: list[str] = Field(
+        description="Suggestions for clearer communication with non-native English speakers",
+        default_factory=list
     )
 
 

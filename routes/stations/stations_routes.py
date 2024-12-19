@@ -121,6 +121,7 @@ def create_station():
         return jsonify({"error": str(e)}), 500
 
 
+@jwt_required()
 @bp.route("/api/get_paginated_stations", methods=["GET", "OPTIONS"])
 @cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
 def get_paginated_stations():
@@ -170,6 +171,7 @@ def get_paginated_stations():
         return jsonify({"error": "An error occurred while retrieving stations."}), 500
 
 
+@jwt_required()
 @bp.route("/api/get_all_stations", methods=["GET", "OPTIONS"])
 @cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
 def get_all_stations():
@@ -195,6 +197,7 @@ def get_all_stations():
         return jsonify({"error": "An error occurred while retrieving stations."}), 500
 
 
+@jwt_required()
 @bp.route("/api/get_stations/<mock_id>", methods=["GET", "OPTIONS"])
 @cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
 def get_stations(
@@ -219,6 +222,7 @@ def get_stations(
         return jsonify({"error": "An error occurred while retrieving stations."}), 500
 
 
+@jwt_required() 
 @bp.route("/api/get_station_by_id/<station_id>", methods=["GET", "OPTIONS"])
 @cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
 def get_station_by_id(station_id):
@@ -243,6 +247,7 @@ def get_station_by_id(station_id):
         )
 
 
+@jwt_required()
 @bp.route("/api/complete_station", methods=["POST", "OPTIONS"])
 @cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
 def complete_station():
@@ -296,6 +301,7 @@ def complete_station():
         )
 
 
+@jwt_required()
 @bp.route("/api/flag_station", methods=["POST", "OPTIONS"])
 @cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
 def flag_station():
