@@ -18,6 +18,12 @@ class FlaggedStation(BaseModel):
     flagged: bool
     mock_id: str
 
+class BookedMocks(BaseModel):
+    mock_name: str
+    mock_id: str
+    mock_datetime: str
+    booking_datetime: str
+
 
 class UserModel(BaseModel):
     user_id: str = Field(description="Unique identifier for the user")
@@ -40,6 +46,9 @@ class UserModel(BaseModel):
     )
     flagged_stations: List[FlaggedStation] = Field(
         default_factory=list, description="List of flagged stations for the user"
+    )
+    booked_mocks: List[BookedMocks] = Field(
+        default_factory=list, description="List of booked mocks for the user"
     )
     has_paid: bool = Field(description="Whether the user has paid for the service")
     is_currently_logged_in: Optional[bool] = Field(description="Whether the user is currently logged in")

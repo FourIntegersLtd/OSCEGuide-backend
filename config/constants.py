@@ -36,7 +36,13 @@ TRANSCRIPT_DOCUMENT_ID = "transcripts_id"
 
 MESSAGES_COLLECTION_NAME = "messages_collection"
 MESSAGES_REFERENCE_NAME = "messages"
-MESSAGES_DOCUMENT_ID = "messages_id"    
+MESSAGES_DOCUMENT_ID = "messages_id" 
+
+
+
+BOOKINGS_COLLECTION_NAME = "bookings_collection"
+BOOKINGS_REFERENCE_NAME = "bookings"
+BOOKINGS_DOCUMENT_ID = "bookings_id" 
 
 
     

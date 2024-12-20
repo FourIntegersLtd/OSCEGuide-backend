@@ -40,6 +40,9 @@ def create_mock():
             return jsonify({"message": "You are not authorized to create mocks"}), 403
 
         data = request.json
+        available_slots = data.get("available_slots")
+
+        print("available_slots>>>>>>", available_slots)
 
         mock_data = {
             "mock_id": str(uuid.uuid4()),
@@ -48,6 +51,7 @@ def create_mock():
             "stations": data.get("stationIds"),
             "created_by": user_id,
             "created_at": datetime.now().isoformat(),
+            "available_slots": available_slots,
         }
 
         new_mock = MockModel(**mock_data).model_dump()
@@ -106,6 +110,12 @@ def update_mock(mock_id):
         verify_jwt_in_request()
         claims = get_jwt()
         current_user_email = claims.get("email")
+        
+        # Ensure we're getting the available_slots from the request data
+        available_slots = data.get("available_slots", [])  # Default to empty list if not provided
+        
+        print("Received data:", data)  # Debug print
+        print("Available slots:", available_slots)  # Debug print
 
         if current_user_email not in ADMIN_USER_EMAILS:
             return jsonify({"message": "You are not authorized to update mocks"}), 403
@@ -127,8 +137,11 @@ def update_mock(mock_id):
             "stations": data.get("stationIds"),
             "created_by": user_id,
             "created_at": datetime.now().isoformat(),
+            "available_slots": available_slots  # Make sure this is included
         }
 
+        print("Mock data to be saved:", mock_data)  # Debug print
+        
         # Validate with MockModel
         validated_mock = MockModel(**mock_data).model_dump()
 

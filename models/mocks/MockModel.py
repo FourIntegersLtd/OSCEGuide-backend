@@ -13,6 +13,7 @@ class MockModel(BaseModel):
         description="Timestamp when the mock was created",
     )
     created_by: str = Field(description="User id of the creator of the mock")
+    available_slots: List[str] = Field(description="List of available time slots for the mock")
 
     class Config:
         json_schema_extra = {

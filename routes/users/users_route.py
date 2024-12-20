@@ -216,6 +216,7 @@ def get_user_by_id(user_id: str):
             "has_paid": user_data.get("has_paid"),
             "mock_progress": user_data.get("mock_progress", []),
             "station_progress": user_data.get("station_progress", []),
+            "booked_mocks": user_data.get("booked_mocks", []),
         }
 
         return jsonify({"status": "success", "user": sanitized_user_data}), 200
@@ -305,6 +306,7 @@ def login():
                         "role": user_object.get("role"),
                         "station_progress": user_object.get("station_progress", []),
                         "mock_progress": user_object.get("mock_progress", []),
+                        "booked_mocks": user_object.get("booked_mocks", []),    
                     },
                 }
             )
