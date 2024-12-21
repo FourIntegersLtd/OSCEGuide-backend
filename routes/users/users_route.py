@@ -204,7 +204,6 @@ def get_user_by_id(user_id: str):
 
         user_data = user_result[1][0]
 
-        print("user_data", user_data)
 
         # Sanitize user data - only return necessary fields
         sanitized_user_data = {

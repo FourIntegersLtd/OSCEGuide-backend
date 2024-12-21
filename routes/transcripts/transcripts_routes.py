@@ -1,4 +1,3 @@
-import uuid
 from datetime import datetime
 from flask_cors import cross_origin
 from flask import Blueprint, request, jsonify
@@ -15,21 +14,24 @@ from models.transcripts.TranscriptModel import Transcript
 
 bp = Blueprint("transcripts", __name__)  #
 
-@jwt_required()     
+
+@jwt_required()
 @bp.route("/api/add_transcript_to_db", methods=["POST", "OPTIONS"])
 @cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
 def add_transcript():
     try:
         data = request.json
+        # Debug print for incoming data
 
         transcript_messages = [
             {
                 "role": msg["role"],
                 "message": msg["message"],
-                "time_in_call_secs": msg["time_in_call_secs"],
+                # "time_in_call_secs": msg["time_in_call_secs"],
             }
             for msg in data.get("transcript_message", [])
         ]
+        # Debug print for parsed messages
 
         transcript_data = {
             "transcript_id": data.get("transcript_id"),
@@ -41,6 +43,7 @@ def add_transcript():
         }
 
         new_transcript = Transcript(**transcript_data).model_dump()
+        # Debug print for the new transcript
 
         success, message = add_document_array(
             TRANSCRIPT_COLLECTION_NAME,
@@ -66,7 +69,9 @@ def add_transcript():
 
 
 @jwt_required()
-@bp.route("/api/get_transcripts/<mock_id>/<station_id>/<user_id>", methods=["GET", "OPTIONS"])
+@bp.route(
+    "/api/get_transcripts/<mock_id>/<station_id>/<user_id>", methods=["GET", "OPTIONS"]
+)
 @cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
 def get_transcripts(mock_id, station_id, user_id):
     try:
@@ -77,6 +82,7 @@ def get_transcripts(mock_id, station_id, user_id):
             TRANSCRIPT_REFERENCE_NAME,
             filters={"user_id": user_id, "mock_id": mock_id, "station_id": station_id},
         )
+        print("data from get_transcripts>>>", transcripts)
 
         if not success:
             return jsonify({"error": transcripts}), 404

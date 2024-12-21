@@ -5,7 +5,7 @@ from datetime import datetime
 class TranscriptMessage(BaseModel):
     role: str = Field(..., description="Role of the speaker (e.g., 'user', 'interviewer')")
     message: str = Field(..., description="Content of the message")
-    time_in_call_secs: int = Field(..., description="Time in seconds when message was spoken")
+    # time_in_call_secs: int = Field(..., description="Time in seconds when message was spoken")
 
 class Transcript(BaseModel):
     transcript_id: str = Field(..., description="Unique identifier for the transcript")
