@@ -1,4 +1,6 @@
+import os
 import uuid
+import requests
 from datetime import datetime
 from flask_cors import cross_origin
 from models.users.UserModel import StationProgress
@@ -9,6 +11,7 @@ from flask_jwt_extended import (
     verify_jwt_in_request,
     get_jwt,
 )
+from dotenv import load_dotenv
 from config.constants import (
     FRONT_END_URLS,
     STATIONS_COLLECTION_NAME,
@@ -26,6 +29,15 @@ from config.firestore.firestore_config import (
     get_paginated_stations_array,
     delete_document_array_item,
 )
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+# Initialize the Limiter
+limiter = Limiter(
+    get_remote_address,
+    default_limits=["200 per day", "50 per hour"]  # Adjust limits as needed
+)
+load_dotenv()
 
 bp = Blueprint("stations", __name__)
 
@@ -504,3 +516,34 @@ def delete_station(station_id):
 
     except Exception as e:
         return jsonify({"error": "An error occurred while deleting the station."}), 500
+
+
+@jwt_required()
+@limiter.limit("5 per minute")
+@bp.route("/api/create_realtimeapi_session", methods=["GET", "OPTIONS"])
+@cross_origin(origins=FRONT_END_URLS, supports_credentials=True)
+def create_realtimeapi_session():
+    try: 
+        print("[DEBUG] Starting create_realtimeapi_session")
+        print(f"[DEBUG] Using OpenAI API key: {os.getenv('OPENAI_API_KEY')[:5]}...")  # Only print first 5 chars for security
+        
+        response = requests.post(
+            "https://api.openai.com/v1/realtime/sessions",
+            headers={
+                "Authorization": f"Bearer {os.getenv('OPENAI_API_KEY')}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "gpt-4o-mini-realtime-preview-2024-12-17",
+                "voice": "echo"
+            }
+        )
+        print(f"[DEBUG] Response status code: {response.status_code}")
+        print(f"[DEBUG] Response content: {response.json()}")
+        
+        return jsonify(response.json())
+    except Exception as e:
+        print(f"[DEBUG] Error in create_realtimeapi_session: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
