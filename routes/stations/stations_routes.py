@@ -535,7 +535,7 @@ def create_realtimeapi_session():
             },
             json={
                 "model": "gpt-4o-mini-realtime-preview-2024-12-17",
-                "voice": "verse"
+                "voice": "echo"
             }
         )
         print(f"[DEBUG] Response status code: {response.status_code}")
